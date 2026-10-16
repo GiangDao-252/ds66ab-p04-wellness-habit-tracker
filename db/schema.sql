@@ -38,3 +38,24 @@ CREATE TABLE habit (
     CONSTRAINT habit_active_period_valid
         CHECK (active_to >= active_from)
     );
+
+CREATE TABLE check_in (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    habit_id BIGINT NOT NULL,
+    check_date DATE NOT NULL,
+    measurement NUMERIC NOT NULL,
+    note VARCHAR(1000) NOT NULL DEFAULT '',
+
+    CONSTRAINT check_in_habit_fk
+        FOREIGN KEY (habit_id)
+        REFERENCES habit (id),
+
+    CONSTRAINT check_in_measurement_valid
+        CHECK (
+            measurement >= 0
+            AND measurement::text NOT IN ('NaN', 'Infinity', '-Infinity')
+        ),
+
+    CONSTRAINT check_in_habit_date_unique
+        UNIQUE (habit_id, check_date)
+);
