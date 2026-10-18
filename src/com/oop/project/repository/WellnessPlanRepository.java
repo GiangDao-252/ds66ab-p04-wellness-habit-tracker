@@ -18,6 +18,38 @@ public final class WellnessPlanRepository {
 
     }
 
+    public long insert(Connection connection, String name)
+            throws SQLException {
+
+        if (name == null || name.isBlank() || name.length() > 120) {
+            throw new IllegalArgumentException(
+                    "Plan name must contain 1 to 120 characters."
+            );
+        }
+
+        String sql = """
+        INSERT INTO wellness_plan (name)
+        VALUES (?)
+        RETURNING id
+        """;
+
+        try (
+                PreparedStatement statement
+                = connection.prepareStatement(sql)) {
+            statement.setString(1, name.trim());
+
+            try (ResultSet result = statement.executeQuery()) {
+                if (result.next()) {
+                    return result.getLong("id");
+                }
+
+                throw new SQLException(
+                        "Creating the plan did not return an ID."
+                );
+            }
+        }
+    }
+
     public List<PlanRow> findAll(Connection connection)
             throws SQLException {
 
