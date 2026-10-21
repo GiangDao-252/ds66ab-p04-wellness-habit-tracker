@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public final class HabitRepository {
 
@@ -97,6 +98,81 @@ public final class HabitRepository {
         }
 
         return habits;
+    }
+
+    // Finds one habit by its ID.
+    public Optional<HabitRow> findById(
+            Connection connection, long id
+    ) throws SQLException {
+
+        String sql = """
+        SELECT id, plan_id, name, frequency, target_value,
+               unit, active_from, active_to, active
+        FROM habit
+        WHERE id = ?
+        """;
+
+        try (
+                PreparedStatement statement
+                = connection.prepareStatement(sql)) {
+            statement.setLong(1, id);
+
+            try (ResultSet result = statement.executeQuery()) {
+                if (result.next()) {
+                    return Optional.of(mapRow(result));
+                }
+
+                return Optional.empty();
+            }
+        }
+    }
+
+// Updates the target without changing its measurement unit.
+    public boolean updateTarget(
+            Connection connection, long id, BigDecimal target
+    ) throws SQLException {
+
+        if (target == null || target.signum() <= 0) {
+            throw new IllegalArgumentException(
+                    "Habit target must be greater than zero."
+            );
+        }
+
+        String sql = """
+        UPDATE habit
+        SET target_value = ?
+        WHERE id = ?
+        """;
+
+        try (
+                PreparedStatement statement
+                = connection.prepareStatement(sql)) {
+            statement.setBigDecimal(1, target);
+            statement.setLong(2, id);
+
+            return statement.executeUpdate() == 1;
+        }
+    }
+
+    // Enables or disables tracking while preserving habit history.
+    public boolean setActive(
+            Connection connection, long id, boolean active
+    ) throws SQLException {
+
+        String sql = """
+            UPDATE habit
+            SET active = ?
+            WHERE id = ?
+            """;
+
+        try (
+                PreparedStatement statement
+                = connection.prepareStatement(sql)) {
+            statement.setBoolean(1, active);
+            statement.setLong(2, id);
+
+            return statement.executeUpdate() == 1;
+        }
     }
 
     // Converts one database row into a Java record.
