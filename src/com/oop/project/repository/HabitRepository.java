@@ -175,6 +175,61 @@ public final class HabitRepository {
         }
     }
 
+    // Updates the habit name and frequency.
+    public boolean updateDetails(
+            Connection connection,
+            long id,
+            String name,
+            Frequency frequency
+    ) throws SQLException {
+
+        if (name == null || name.isBlank() || name.length() > 120) {
+            throw new IllegalArgumentException(
+                    "Habit name must contain 1 to 120 characters."
+            );
+        }
+
+        if (frequency == null) {
+            throw new IllegalArgumentException(
+                    "Habit frequency is required."
+            );
+        }
+
+        String sql = """
+        UPDATE habit
+        SET name = ?, frequency = ?
+        WHERE id = ?
+        """;
+
+        try (
+                PreparedStatement statement
+                = connection.prepareStatement(sql)) {
+            statement.setString(1, name.trim());
+            statement.setString(2, frequency.name());
+            statement.setLong(3, id);
+
+            return statement.executeUpdate() == 1;
+        }
+    }
+
+    // Deletes a habit if no related records prevent deletion.
+    public boolean delete(Connection connection, long id)
+            throws SQLException {
+
+        String sql = """
+        DELETE FROM habit
+        WHERE id = ?
+        """;
+
+        try (
+                PreparedStatement statement
+                = connection.prepareStatement(sql)) {
+            statement.setLong(1, id);
+
+            return statement.executeUpdate() == 1;
+        }
+    }
+
     // Converts one database row into a Java record.
     private HabitRow mapRow(ResultSet result)
             throws SQLException {
