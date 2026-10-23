@@ -106,11 +106,11 @@ public final class HabitRepository {
     ) throws SQLException {
 
         String sql = """
-        SELECT id, plan_id, name, frequency, target_value,
-               unit, active_from, active_to, active
-        FROM habit
-        WHERE id = ?
-        """;
+            SELECT id, plan_id, name, frequency, target_value,
+                   unit, active_from, active_to, active
+            FROM habit
+            WHERE id = ?
+            """;
 
         try (
                 PreparedStatement statement
@@ -127,7 +127,36 @@ public final class HabitRepository {
         }
     }
 
-// Updates the target without changing its measurement unit.
+    // Requires a transaction with auto-commit disabled.
+    // Locks the habit until the caller commits or rolls back.
+    public Optional<HabitRow> findByIdForUpdate(
+            Connection connection, long id
+    ) throws SQLException {
+
+        String sql = """
+            SELECT id, plan_id, name, frequency, target_value,
+                   unit, active_from, active_to, active
+            FROM habit
+            WHERE id = ?
+            FOR UPDATE
+            """;
+
+        try (
+                PreparedStatement statement
+                = connection.prepareStatement(sql)) {
+            statement.setLong(1, id);
+
+            try (ResultSet result = statement.executeQuery()) {
+                if (result.next()) {
+                    return Optional.of(mapRow(result));
+                }
+
+                return Optional.empty();
+            }
+        }
+    }
+
+    // Updates the target without changing its measurement unit.
     public boolean updateTarget(
             Connection connection, long id, BigDecimal target
     ) throws SQLException {
@@ -139,10 +168,10 @@ public final class HabitRepository {
         }
 
         String sql = """
-        UPDATE habit
-        SET target_value = ?
-        WHERE id = ?
-        """;
+            UPDATE habit
+            SET target_value = ?
+            WHERE id = ?
+            """;
 
         try (
                 PreparedStatement statement
@@ -196,10 +225,10 @@ public final class HabitRepository {
         }
 
         String sql = """
-        UPDATE habit
-        SET name = ?, frequency = ?
-        WHERE id = ?
-        """;
+            UPDATE habit
+            SET name = ?, frequency = ?
+            WHERE id = ?
+            """;
 
         try (
                 PreparedStatement statement
@@ -217,9 +246,9 @@ public final class HabitRepository {
             throws SQLException {
 
         String sql = """
-        DELETE FROM habit
-        WHERE id = ?
-        """;
+            DELETE FROM habit
+            WHERE id = ?
+            """;
 
         try (
                 PreparedStatement statement
