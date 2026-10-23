@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public final class CheckInRepository {
 
@@ -96,6 +97,81 @@ public final class CheckInRepository {
         }
 
         return checkIns;
+    }
+
+    // Finds a check-in belonging to the selected habit.
+    public Optional<CheckInRow> findById(
+            Connection connection, long id, long habitId
+    ) throws SQLException {
+
+        String sql = """
+        SELECT id, habit_id, check_date, measurement, note
+        FROM check_in
+        WHERE id = ? AND habit_id = ?
+        """;
+
+        try (
+                PreparedStatement statement
+                = connection.prepareStatement(sql)) {
+            statement.setLong(1, id);
+            statement.setLong(2, habitId);
+
+            try (ResultSet result = statement.executeQuery()) {
+                if (result.next()) {
+                    return Optional.of(mapRow(result));
+                }
+
+                return Optional.empty();
+            }
+        }
+    }
+
+// Updates a check-in without transferring it to another habit.
+    public boolean update(
+            Connection connection, CheckInRow checkIn
+    ) throws SQLException {
+
+        validate(checkIn);
+
+        String sql = """
+        UPDATE check_in
+        SET check_date = ?, measurement = ?, note = ?
+        WHERE id = ? AND habit_id = ?
+        """;
+
+        try (
+                PreparedStatement statement
+                = connection.prepareStatement(sql)) {
+            statement.setObject(1, checkIn.checkDate());
+            statement.setBigDecimal(2, checkIn.measurement());
+            statement.setString(
+                    3, checkIn.note() == null ? "" : checkIn.note()
+            );
+            statement.setLong(4, checkIn.id());
+            statement.setLong(5, checkIn.habitId());
+
+            return statement.executeUpdate() == 1;
+        }
+    }
+
+    // Deletes a check-in belonging to the selected habit.
+    public boolean delete(
+            Connection connection, long id, long habitId
+    ) throws SQLException {
+
+        String sql = """
+            DELETE FROM check_in
+            WHERE id = ? AND habit_id = ?
+            """;
+
+        try (
+                PreparedStatement statement
+                = connection.prepareStatement(sql)) {
+            statement.setLong(1, id);
+            statement.setLong(2, habitId);
+
+            return statement.executeUpdate() == 1;
+        }
     }
 
     private CheckInRow mapRow(ResultSet result)
