@@ -97,6 +97,27 @@ public final class CheckInService {
         }
     }
 
+    public void delete(long checkInId, long habitId) throws SQLException {
+        Transactions.execute(connection -> {
+            habits.findByIdForUpdate(connection, habitId)
+                    .orElseThrow(() -> new WellnessException(
+                            "The selected habit does not exist."
+                    ));
+
+            boolean deleted = checkIns.delete(
+                    connection, checkInId, habitId
+            );
+
+            if (!deleted) {
+                throw new WellnessException(
+                        "The check-in does not exist for the selected habit."
+                );
+            }
+
+            return null;
+        });
+    }
+
     // Validates input shared by creation and update.
     private void validateInput(
             LocalDate date,
