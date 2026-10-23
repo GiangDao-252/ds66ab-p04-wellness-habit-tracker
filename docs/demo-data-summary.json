@@ -1,0 +1,22 @@
+{
+  "snapshot_date": "2026-10-23",
+  "seed": 482026,
+  "plans": 48,
+  "habits": 338,
+  "check_ins": 31750,
+  "settings": 48,
+  "first_check_in": "2026-03-29",
+  "last_check_in": "2026-10-23",
+  "inactive_habits": 62,
+  "weekly_habits": 56,
+  "zero_measurements": 389,
+  "nonblank_notes": 10339,
+  "behavior_profiles": {
+    "consistent": 8,
+    "improving": 8,
+    "weekend_focused": 8,
+    "interrupted": 8,
+    "restarting": 8,
+    "irregular": 8
+  }
+}
