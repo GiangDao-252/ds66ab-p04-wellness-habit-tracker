@@ -142,4 +142,24 @@ public final class WellnessPlanRepository {
             return affectedRows == 1;
         }
     }
+
+    // Deletes a plan if no related records prevent deletion.
+    public boolean delete(Connection connection, long id)
+            throws SQLException {
+
+        String sql = """
+            DELETE FROM wellness_plan
+            WHERE id = ?
+            """;
+
+        try (
+                PreparedStatement statement
+                = connection.prepareStatement(sql)) {
+            statement.setLong(1, id);
+
+            int affectedRows = statement.executeUpdate();
+
+            return affectedRows == 1;
+        }
+    }
 }
