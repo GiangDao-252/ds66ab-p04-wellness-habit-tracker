@@ -1,5 +1,5 @@
+package com.oop.project.model;
 import java.time.LocalDate;
-
 public class CheckIn {
     private LocalDate date;
     private double value;
