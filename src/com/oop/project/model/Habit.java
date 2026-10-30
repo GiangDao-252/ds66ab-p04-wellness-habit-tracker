@@ -1,9 +1,12 @@
 package com.oop.project.model;
 
+
+import com.oop.project.exception.InvalidHabitException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 
 public class Habit {
     private String id;
@@ -33,10 +36,10 @@ public class Habit {
     // --- Validation logic ---
     private void validate(double targetValue, LocalDate startDate, LocalDate endDate) {
         if (targetValue <= 0) {
-            throw new IllegalArgumentException("Target value must be greater than zero");
+            throw new InvalidHabitException("Target value must be greater than zero. Provided: " + targetValue);
         }
         if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
-            throw new IllegalArgumentException("Start date cannot be after end date");
+            throw new InvalidHabitException("Start date (" + startDate + ") cannot be after end date (" + endDate + ")");
         }
     }
 

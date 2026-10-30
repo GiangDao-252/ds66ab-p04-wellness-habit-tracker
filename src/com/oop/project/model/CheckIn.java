@@ -1,5 +1,6 @@
 package com.oop.project.model;
 
+import com.oop.project.exception.InvalidCheckInException;
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -24,13 +25,13 @@ public final class CheckIn {
      */
     private void validate(LocalDate date, double value) {
         if (date == null) {
-            throw new IllegalArgumentException("Check-in date cannot be null.");
+            throw new InvalidCheckInException("Check-in date cannot be null.");
         }
         if (date.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Check-in date cannot be in the future.");
+            throw new InvalidCheckInException("Check-in date cannot be in the future (" + date + ").");
         }
         if (value <= 0) {
-            throw new IllegalArgumentException("Check-in measurement value must be greater than zero.");
+            throw new InvalidCheckInException("Check-in measurement value must be greater than zero. Provided: " + value);
         }
     }
 
