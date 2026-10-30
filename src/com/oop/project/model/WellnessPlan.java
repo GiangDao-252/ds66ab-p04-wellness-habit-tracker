@@ -1,5 +1,6 @@
 package com.oop.project.model;
 
+import com.oop.project.exception.InvalidPlanException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,17 +31,17 @@ public class WellnessPlan {
 
     private void validate(String name) {
         if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Plan name cannot be null or empty.");
+            throw new InvalidPlanException("Plan name cannot be null or empty.");
         }
     }
 
     // --- Quản lý danh sách Habit (Aggregate management) ---
     public void addHabit(Habit habit) {
         if (habit == null) {
-            throw new IllegalArgumentException("Habit cannot be null.");
+            throw new InvalidPlanException("Habit cannot be null.");
         }
         if (habits.stream().anyMatch(h -> h.getId().equals(habit.getId()))) {
-            throw new IllegalArgumentException("Habit with this ID already exists in the plan.");
+            throw new InvalidPlanException("Habit with this ID ' " + habit.getId() + " ' already exists in the plan.");
         }
         this.habits.add(habit);
         
