@@ -1,7 +1,10 @@
 package com.oop.project;
-public class Main {
 
+import com.oop.project.ui.ConsoleApp;
+import java.util.Scanner;
+
+public final class Main {
     public static void main(String[] args) {
-        System.out.println("Project started!");
+        new ConsoleApp().run(new Scanner(System.in), System.out);
     }
 }
