@@ -1,5 +1,13 @@
 package com.oop.project.service;
 
+import com.oop.project.repository.EvaluationSettingRepository.SettingRow;
+import com.oop.project.repository.EvaluationSettingRepository.StrategyType;
+import java.util.ArrayList;
+
+import com.oop.project.repository.CheckInRepository.CheckInRow;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 import com.oop.project.db.ConnectionFactory;
 import com.oop.project.db.Transactions;
 import com.oop.project.repository.*;
@@ -7,9 +15,6 @@ import com.oop.project.repository.HabitRepository.HabitRow;
 import com.oop.project.repository.HabitRepository.Frequency;
 import java.sql.SQLException;
 import java.util.List;
-import com.oop.project.repository.CheckInRepository.CheckInRow;
-import java.math.BigDecimal;
-import java.time.LocalDate;
 
 public final class ApplicationService {
     private final WellnessPlanRepository plans = new WellnessPlanRepository();
@@ -60,7 +65,8 @@ public final class ApplicationService {
         });
         changes.publish(planId);
     }
-        private final CheckInService checkInService = new CheckInService();
+
+    private final CheckInService checkInService = new CheckInService();
     private final CheckInRepository checkIns = new CheckInRepository();
 
     private long planOfHabit(long habitId) throws SQLException {
@@ -90,10 +96,47 @@ public final class ApplicationService {
         changes.publish(planId);
     }
 
-    public List<CheckInRow> checkIns(long habitId, LocalDate from, LocalDate to)
-            throws SQLException {
+    public List<CheckInRow> checkIns(long habitId, LocalDate from, LocalDate to) throws SQLException {
         try (var connection = ConnectionFactory.open()) {
             return checkIns.findByHabitAndPeriod(connection, habitId, from, to);
+        }
+    }
+
+    private final EvaluationSettingRepository settings = new EvaluationSettingRepository();
+    private final ReportEvaluator evaluator = new ReportEvaluator();
+
+    public void setStrategy(long planId, StrategyType type, int days) throws SQLException {
+        if (days < 1) throw new IllegalArgumentException("Report window must be positive.");
+        Transactions.execute(connection -> {
+            settings.save(connection, new SettingRow(planId, type, days));
+            return null;
+        });
+        changes.publish(planId);
+    }
+
+    public ProgressReport report(long planId, LocalDate from, LocalDate to) throws SQLException {
+        LocalDate today = LocalDate.now();
+        try (var connection = ConnectionFactory.open()) {
+            var setting = settings.findByPlanId(connection, planId)
+                    .orElse(new SettingRow(planId, StrategyType.COMPLETION_PERCENTAGE, 7));
+            if (from == null && to == null) {
+                to = today;
+                from = today.minusDays(setting.configValue() - 1L);
+            }
+            if (from == null || to == null || from.isAfter(to) || to.isAfter(today)) {
+                throw new IllegalArgumentException("Choose a valid report period ending today or earlier.");
+            }
+
+            var results = new ArrayList<ProgressReport.Entry>();
+            for (var habit : habits.findByPlanId(connection, planId)) {
+                LocalDate start = from.isBefore(habit.activeFrom()) ? habit.activeFrom() : from;
+                LocalDate end = to.isAfter(habit.activeTo()) ? habit.activeTo() : to;
+                if (!start.isAfter(end)) {
+                    var rows = checkIns.findByHabitAndPeriod(connection, habit.id(), start, end);
+                    results.add(evaluator.evaluate(setting.strategyType(), habit, rows, start, end));
+                }
+            }
+            return new ProgressReport(planId, from, to, setting.strategyType(), results);
         }
     }
 }
