@@ -59,3 +59,10 @@ CREATE TABLE check_in (
     CONSTRAINT check_in_habit_date_unique
         UNIQUE (habit_id, check_date)
 );
+
+CREATE TABLE evaluation_setting (
+    plan_id BIGINT PRIMARY KEY REFERENCES wellness_plan(id),
+    strategy_type VARCHAR(30) NOT NULL
+        CHECK (strategy_type IN ('COMPLETION_PERCENTAGE', 'STREAK')),
+    config_value INTEGER NOT NULL CHECK (config_value > 0)
+);
